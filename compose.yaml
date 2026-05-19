@@ -11,7 +11,7 @@ services:
     depends_on:
       - broker
     ports:
-      - "${PAPERLESS_PORT:-8000}:8000"
+      - "${PAPERLESS_PORT:-8000}:${PAPERLESS_PORT:-8000}"
     volumes:
       - ./data:/usr/src/paperless/data:Z
       - ./media:/usr/src/paperless/media:Z
@@ -21,4 +21,5 @@ services:
     environment:
       PAPERLESS_REDIS: redis://broker:6379
       PAPERLESS_TIME_ZONE: UTC
-      PAPERLESS_OCR_LANGUAGE: por+eng
+      PAPERLESS_OCR_LANGUAGE: por+spa+eng
+      PAPERLESS_OCR_LANGUAGES: por spa eng

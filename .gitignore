@@ -3,6 +3,7 @@ data/
 media/
 export/
 consume/
+redis/
 
 # Configuration and secrets
 .env
