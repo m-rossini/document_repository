@@ -42,7 +42,7 @@ Then restart WSL from PowerShell: `wsl --shutdown`.
     ```bash
     make start
     ```
-    Go to `http://localhost:8000` to access Paperless-ngx.
+    Access the system at `http://localhost:8000` (or the port defined in your `.env` as `PAPERLESS_PORT`).
 
 ### Ingestion Methods
 

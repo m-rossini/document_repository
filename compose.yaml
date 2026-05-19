@@ -11,7 +11,7 @@ services:
     depends_on:
       - broker
     ports:
-      - "8000:8000"
+      - "${PAPERLESS_PORT:-8000}:8000"
     volumes:
       - ./data:/usr/src/paperless/data:Z
       - ./media:/usr/src/paperless/media:Z

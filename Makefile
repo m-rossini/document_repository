@@ -28,9 +28,11 @@ setup:
 		PASSWORD=$$(LC_ALL=C tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 16); \
 		echo "PAPERLESS_ADMIN_USER=admin" >> .env; \
 		echo "PAPERLESS_ADMIN_PASSWORD=$$PASSWORD" >> .env; \
+		echo "PAPERLESS_PORT=8000" >> .env; \
 		echo "Generated .env with default admin credentials:"; \
 		echo "User: admin"; \
-		echo "Pass: $$PASSWORD" \
+		echo "Pass: $$PASSWORD"; \
+		echo "Port: 8000" \
 	)
 	@$(MAKE) install-timer
 
