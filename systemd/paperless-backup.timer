@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily Paperless-ngx Rclone Backup Timer
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+Unit=paperless-backup.service
+
+[Install]
+WantedBy=timers.target

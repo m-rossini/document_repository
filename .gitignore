@@ -1,0 +1,15 @@
+# Local storage folders
+data/
+media/
+export/
+consume/
+
+# Configuration and secrets
+.env
+
+# Runtime logs
+*.log
+
+# System files
+.DS_Store
+Thumbs.db
