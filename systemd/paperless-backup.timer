@@ -1,8 +1,8 @@
 [Unit]
-Description=Daily Paperless-ngx Rclone Backup Timer
+Description=Paperless-ngx Rclone Backup Timer (Every 8 Hours)
 
 [Timer]
-OnCalendar=daily
+OnCalendar=00/8:00:00
 Persistent=true
 Unit=paperless-backup.service
 
