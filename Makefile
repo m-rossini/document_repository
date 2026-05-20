@@ -40,13 +40,15 @@ start:
 	$(COMPOSE_CMD) up -d
 
 install-timer:
-	@mkdir -p ~/.config/systemd/user/
-	@cp systemd/paperless-backup.service ~/.config/systemd/user/
-	@cp systemd/paperless-backup.timer ~/.config/systemd/user/
-	@sed -i "s|{{PROJECT_ROOT}}|$$PWD|g" ~/.config/systemd/user/paperless-backup.service
+	@mkdir -p $(HOME)/.config/systemd/user/
+	# Use 'cp' to ensure we start from the clean source file in the repo
+	@cp systemd/paperless-backup.service $(HOME)/.config/systemd/user/
+	@cp systemd/paperless-backup.timer $(HOME)/.config/systemd/user/
+	# Replace the placeholder using the current directory
+	@sed -i "s|{{PROJECT_ROOT}}|$$PWD|g" $(HOME)/.config/systemd/user/paperless-backup.service
 	@systemctl --user daemon-reload
 	@systemctl --user enable --now paperless-backup.timer
-	@echo "Systemd timer activated."
+	@echo "Systemd timer activated at: $$PWD"
 
 backup:
 	./backup.sh

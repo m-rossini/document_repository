@@ -1,11 +1,12 @@
 [Unit]
 Description=Paperless-ngx Rclone Backup Service
-After=network.target
+After=network-online.target
 
 [Service]
 Type=oneshot
-WorkingDirectory={{PROJECT_ROOT}}
-ExecStart=/bin/bash {{PROJECT_ROOT}}/backup.sh
+# %h automatically expands to the home directory of the user running the timer
+WorkingDirectory=%h/my-archive-repo
+ExecStart=/bin/bash %h/my-archive-repo/backup.sh
 StandardOutput=journal
 StandardError=journal
 

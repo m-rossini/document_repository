@@ -23,3 +23,6 @@ services:
       PAPERLESS_TIME_ZONE: UTC
       PAPERLESS_OCR_LANGUAGE: por+spa+eng
       PAPERLESS_OCR_LANGUAGES: por spa eng
+    # The variables are read directly from .env by the container
+    # so we don't need to manually map them here unless we want to override them.
+    # PAPERLESS_FILENAME_FORMAT is now handled via .env
