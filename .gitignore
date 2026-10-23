@@ -1,0 +1,10 @@
+# Runtime state — never commit
+data/
+backups/
+
+# Real secrets / local config
+docker-compose.env
+
+# OS / editor noise
+.DS_Store
+*.swp

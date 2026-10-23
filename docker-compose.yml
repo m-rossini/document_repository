@@ -1,0 +1,92 @@
+# Paperless-ngx — self-hosted document management
+# Stack: webserver, broker (redis), db (postgres), gotenberg, tika
+# All state lives under ./data/ (gitignored). Config via docker-compose.env.
+
+services:
+  broker:
+    image: docker.io/library/redis:7
+    container_name: documentrepo-broker
+    restart: unless-stopped
+    volumes:
+      - ./data/redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  db:
+    image: docker.io/library/postgres:16
+    container_name: documentrepo-db
+    restart: unless-stopped
+    volumes:
+      - ./data/db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-paperless}
+      POSTGRES_USER: ${POSTGRES_USER:-paperless}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-paperless}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-paperless} -d ${POSTGRES_DB:-paperless}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  webserver:
+    image: ghcr.io/paperless-ngx/paperless-ngx:latest
+    container_name: documentrepo-webserver
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      broker:
+        condition: service_healthy
+    ports:
+      - "${PAPERLESS_PORT:-8000}:8000"
+    volumes:
+      - ./data/data:/usr/src/paperless/data
+      - ./data/media:/usr/src/paperless/media
+      - ./data/export:/usr/src/paperless/export
+      - ./data/consume:/usr/src/paperless/consume
+    env_file:
+      - docker-compose.env
+    environment:
+      PAPERLESS_REDIS: redis://broker:6379
+      PAPERLESS_DBHOST: db
+      PAPERLESS_DBNAME: ${POSTGRES_DB:-paperless}
+      PAPERLESS_DBUSER: ${POSTGRES_USER:-paperless}
+      PAPERLESS_DBPASS: ${POSTGRES_PASSWORD:-paperless}
+      PAPERLESS_OCR_LANGUAGE: por+eng
+      PAPERLESS_OCR_MODE: skip
+      PAPERLESS_TIKA_ENABLED: "1"
+      PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://gotenberg:3000
+      PAPERLESS_TIKA_ENDPOINT: http://tika:9998
+      PAPERLESS_TIME_ZONE: ${TZ:-UTC}
+      USERMAP_UID: 1000
+      USERMAP_GID: 1000
+      # --- AI integration (deferred; requires an external LLM endpoint) ---
+      # PAPERLESS_AI_ENABLED: "1"
+      # PAPERLESS_AI_LLM_ENDPOINT: http://ollama:11434
+      # PAPERLESS_AI_LLM_MODEL: llama3.1
+      # TODO: uncomment + add an ollama service once an LLM host is available.
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
+  gotenberg:
+    image: docker.io/gotenberg/gotenberg:8
+    container_name: documentrepo-gotenberg
+    restart: unless-stopped
+    command:
+      - "gotenberg"
+      - "--chromium-disable-javascript=true"
+      - "--chromium-allow-list=file:///tmp/.*"
+
+  tika:
+    image: docker.io/apache/tika:latest
+    container_name: documentrepo-tika
+    restart: unless-stopped
