@@ -81,13 +81,77 @@ safety.
 
 ```bash
 make backup
-docker compose --env-file docker-compose.env pull
+make pull
 make up
 ```
 
 Paperless runs migrations automatically on startup.
 
-## 7. Notes
+## 7. Remote deployment
+
+Same stack, run on another machine. The bundle is validated locally, copied over
+SSH, and started there — the project is never cloned or built on the remote.
+
+**Remote requirements:** Docker Engine with the Compose v2 plugin, plus an SSH
+account that can run `docker`.
+
+**Settings** — pass per command or `export` them:
+
+| Variable | Default | Meaning |
+|----------|---------|---------|
+| `REMOTE` | *(required)* | ssh destination, e.g. `user@host` |
+| `SSH_PORT` | `22` | ssh port |
+| `SSH_OPTS` | *(empty)* | extra ssh/scp flags, e.g. `-i ~/.ssh/deploy` |
+| `REMOTE_DIR` | `~/document_repo` | project dir on the remote |
+| `REMOTE_ENV_FORCE` | *(empty)* | `1` re-uploads `docker-compose.env` |
+
+**First deploy:**
+
+```bash
+make remote-deploy REMOTE=user@host
+make remote-admin REMOTE=user@host    # create the login on the remote
+```
+
+`remote-deploy` = `remote-init` + `remote-up`. `remote-init` alone installs the
+bundle without starting anything.
+
+**Every local target has a remote twin:**
+
+| Local | Remote |
+|-------|--------|
+| `make init` | `remote-init` — create `REMOTE_DIR`, data dirs, upload bundle |
+| `make up` / `down` / `restart` | `remote-up` / `remote-down` / `remote-restart` |
+| `make status` | `remote-status` |
+| `make logs` / `logs-web` | `remote-logs` / `remote-logs-web` |
+| `make admin` / `shell` | `remote-admin` / `remote-shell` |
+| `make consume FILE=...` | `remote-consume FILE=...` — scp into the remote consume dir |
+| `make backup` | `remote-backup` — dump remotely, copy into local `backups/` |
+| `make pull` | `remote-pull` |
+
+The compose arguments are identical on both sides, so behavior matches.
+
+**Sync rules:**
+
+- `docker-compose.yml` is uploaded on every `remote-init`/`remote-deploy`.
+- `docker-compose.env` is uploaded only when missing — overwriting it would
+  change `POSTGRES_PASSWORD` on an initialized database and lock the stack out.
+  Use `REMOTE_ENV_FORCE=1` when you really mean it.
+- `data/` and `backups/` are created on the remote, never uploaded. Documents
+  and the database stay there; `remote-down` keeps them.
+
+**Upgrades:**
+
+```bash
+make remote-backup REMOTE=user@host
+make remote-pull REMOTE=user@host
+make remote-up REMOTE=user@host
+```
+
+**Restore** follows section 5 on the remote, with `REMOTE_DIR` as the project
+root. `remote-backup` output is a normal backup directory, usable by either
+machine.
+
+## 8. Notes
 
 - **Timezone** is `UTC` (`TZ` in `docker-compose.env`).
 - **AI features** are intentionally disabled. To enable later, add an LLM
