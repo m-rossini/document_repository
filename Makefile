@@ -10,8 +10,10 @@
 
 SHELL := /bin/bash
 
-COMPOSE_ARGS = docker compose --env-file docker-compose.env -f docker-compose.yml
-COMPOSE = $(COMPOSE_ARGS)
+# Compose engine. Override for podman: REMOTE_COMPOSE_CMD='podman compose'
+COMPOSE_CMD ?= docker compose
+COMPOSE_FLAGS = --env-file docker-compose.env -f docker-compose.yml
+COMPOSE = $(COMPOSE_CMD) $(COMPOSE_FLAGS)
 
 RUNTIME_DIRS := data/db data/redisdata data/data data/media data/export data/consume
 CONSUME_DIR := data/consume
@@ -28,8 +30,10 @@ SSH_OPTS ?=
 SSH = ssh -p $(SSH_PORT)$(if $(SSH_OPTS), $(SSH_OPTS)) $(REMOTE)
 SSH_TTY = ssh -t -p $(SSH_PORT)$(if $(SSH_OPTS), $(SSH_OPTS)) $(REMOTE)
 SCP = scp -P $(SSH_PORT)$(if $(SSH_OPTS), $(SSH_OPTS))
-COMPOSE_REMOTE = $(SSH) 'cd $(REMOTE_DIR) && $(COMPOSE_ARGS)'
-COMPOSE_REMOTE_TTY = $(SSH_TTY) 'cd $(REMOTE_DIR) && $(COMPOSE_ARGS)'
+REMOTE_COMPOSE_CMD ?= $(COMPOSE_CMD)
+COMPOSE_REMOTE_ARGS = $(REMOTE_COMPOSE_CMD) $(COMPOSE_FLAGS)
+COMPOSE_REMOTE = $(SSH) 'cd $(REMOTE_DIR) && $(COMPOSE_REMOTE_ARGS)'
+COMPOSE_REMOTE_TTY = $(SSH_TTY) 'cd $(REMOTE_DIR) && $(COMPOSE_REMOTE_ARGS)'
 REMOTE_CONSUME = $(REMOTE_DIR)/$(CONSUME_DIR)
 REMOTE_RUNTIME_DIRS = $(addprefix $(REMOTE_DIR)/,$(RUNTIME_DIRS) $(BACKUP_ROOT))
 
@@ -114,8 +118,9 @@ remote-init: remote-guard ## Install/refresh the remote bundle (compose file, en
 		echo "docker-compose.env missing — run 'make init' and edit it first."; exit 1; }
 	@echo "Validating the bundle locally ..."
 	@$(COMPOSE) config -q
-	@$(SSH) 'docker compose version >/dev/null 2>&1' || { \
-		echo "Remote host needs Docker Engine with the Compose v2 plugin."; exit 1; }
+	@$(SSH) '$(REMOTE_COMPOSE_CMD) version >/dev/null 2>&1' || { \
+		echo "Remote host has no compose engine: $(REMOTE_COMPOSE_CMD) version failed."; \
+		echo "Set REMOTE_COMPOSE_CMD (e.g. 'podman compose')."; exit 1; }
 	@echo "Preparing $(REMOTE):$(REMOTE_DIR) ..."
 	@$(SSH) "mkdir -p $(REMOTE_RUNTIME_DIRS)"
 	@$(SCP) docker-compose.yml "$(REMOTE):$(REMOTE_DIR)/"
@@ -165,7 +170,7 @@ remote-backup: remote-guard ## Dump the remote DB + media, then copy it into loc
 	@stamp=$$(date +%Y%m%d-%H%M); \
 	echo "Backing up $(REMOTE) into $(BACKUP_ROOT)/$$stamp ..."; \
 	$(SSH) "cd $(REMOTE_DIR) && mkdir -p $(BACKUP_ROOT)/$$stamp" || exit 1; \
-	$(SSH) "cd $(REMOTE_DIR) && $(COMPOSE_ARGS) exec -T db pg_dump -U \$${POSTGRES_USER:-paperless} \$${POSTGRES_DB:-paperless} > $(BACKUP_ROOT)/$$stamp/db.sql" || exit 1; \
+	$(SSH) "cd $(REMOTE_DIR) && $(COMPOSE_REMOTE_ARGS) exec -T db pg_dump -U \$${POSTGRES_USER:-paperless} \$${POSTGRES_DB:-paperless} > $(BACKUP_ROOT)/$$stamp/db.sql" || exit 1; \
 	$(SSH) "cd $(REMOTE_DIR) && tar -czf $(BACKUP_ROOT)/$$stamp/media.tar.gz -C data media" || exit 1; \
 	mkdir -p $(BACKUP_ROOT); \
 	$(SCP) -r "$(REMOTE):$(REMOTE_DIR)/$(BACKUP_ROOT)/$$stamp" "$(BACKUP_ROOT)/"; \

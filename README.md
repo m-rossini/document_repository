@@ -66,7 +66,8 @@ Every local target has a `remote-` twin — `remote-up`, `remote-down`,
 same compose arguments on the remote. State stays in `REMOTE_DIR/data/`.
 
 `docker-compose.env` is uploaded only when absent; set `REMOTE_ENV_FORCE=1` to
-overwrite it. See [OPERATIONS.md](OPERATIONS.md#7-remote-deployment) for details.
+overwrite it. Podman hosts need `REMOTE_COMPOSE_CMD='podman compose'` (see
+[OPERATIONS.md](OPERATIONS.md#7-remote-deployment)).
 
 See [OPERATIONS.md](OPERATIONS.md) for the full operations guide: start/stop,
 feeding documents, backup/restore, and upgrades.

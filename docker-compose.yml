@@ -1,6 +1,8 @@
 # Paperless-ngx — self-hosted document management
 # Stack: webserver, broker (redis), db (postgres), gotenberg, tika
 # All state lives under ./data/ (gitignored). Config via docker-compose.env.
+# Bind mounts carry the :Z label so the stack also runs on podman+SELinux hosts
+# (Fedora/RHEL); Docker on non-SELinux hosts ignores it.
 
 services:
   broker:
@@ -8,7 +10,7 @@ services:
     container_name: documentrepo-broker
     restart: unless-stopped
     volumes:
-      - ./data/redisdata:/data
+      - ./data/redisdata:/data:Z
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -21,7 +23,7 @@ services:
     container_name: documentrepo-db
     restart: unless-stopped
     volumes:
-      - ./data/db:/var/lib/postgresql/data
+      - ./data/db:/var/lib/postgresql/data:Z
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-paperless}
       POSTGRES_USER: ${POSTGRES_USER:-paperless}
@@ -45,10 +47,10 @@ services:
     ports:
       - "${PAPERLESS_PORT:-8000}:8000"
     volumes:
-      - ./data/data:/usr/src/paperless/data
-      - ./data/media:/usr/src/paperless/media
-      - ./data/export:/usr/src/paperless/export
-      - ./data/consume:/usr/src/paperless/consume
+      - ./data/data:/usr/src/paperless/data:Z
+      - ./data/media:/usr/src/paperless/media:Z
+      - ./data/export:/usr/src/paperless/export:Z
+      - ./data/consume:/usr/src/paperless/consume:Z
     env_file:
       - docker-compose.env
     environment:
@@ -63,8 +65,8 @@ services:
       PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://gotenberg:3000
       PAPERLESS_TIKA_ENDPOINT: http://tika:9998
       PAPERLESS_TIME_ZONE: ${TZ:-UTC}
-      USERMAP_UID: 1000
-      USERMAP_GID: 1000
+      USERMAP_UID: ${USERMAP_UID:-1000}
+      USERMAP_GID: ${USERMAP_GID:-1000}
       # --- AI integration (deferred; requires an external LLM endpoint) ---
       # PAPERLESS_AI_ENABLED: "1"
       # PAPERLESS_AI_LLM_ENDPOINT: http://ollama:11434

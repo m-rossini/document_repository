@@ -151,6 +151,31 @@ make remote-up REMOTE=user@host
 root. `remote-backup` output is a normal backup directory, usable by either
 machine.
 
+### Podman on the remote
+
+Podman hosts use the same targets; only the compose command changes:
+
+```bash
+export REMOTE=tengelmann@tengelmann
+export REMOTE_COMPOSE_CMD='podman compose'   # needs podman-compose
+make remote-deploy
+```
+
+Rootless podman specifics:
+
+- Bind mounts carry `:Z`, so SELinux hosts (Fedora/RHEL) work unchanged;
+  Docker ignores the label elsewhere.
+- The remote `docker-compose.env` needs `USERMAP_UID=0` and `USERMAP_GID=0`.
+  Rootless podman maps container root to the SSH user, so this keeps
+  `data/consume`, `data/media`, … owned by that user — otherwise `scp` into
+  `data/consume` fails with permission denied. Re-add these lines after any
+  `REMOTE_ENV_FORCE=1 make remote-init`.
+- `data/db` belongs to the container's postgres user (a subuid), so back it up
+  with `make remote-backup` (`pg_dump`), never by copying the directory.
+- Rootless containers stop when the last session of that user ends. For a
+  always-on host run `sudo loginctl enable-linger $USER` and start the stack at
+  boot.
+
 ## 8. Notes
 
 - **Images**: `tika` and `gotenberg` are pinned. `tika:latest` (4.x) breaks

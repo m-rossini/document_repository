@@ -105,9 +105,11 @@ Use `make` targets instead of raw `docker compose` where one exists:
 | `make remote-deploy REMOTE=user@host` | Validate locally, upload the bundle, start the stack on the remote |
 | `make remote-<target>` | Remote twin of every target above (`REMOTE`, `SSH_PORT`, `SSH_OPTS`, `REMOTE_DIR`) |
 
-`make help` lists the two groups. Local and remote targets share `COMPOSE_ARGS`,
+`make help` lists the two groups. Local and remote targets share `COMPOSE_FLAGS`,
 so their behavior stays identical; `remote-` only swaps the execution prefix
-(`ssh … 'cd $REMOTE_DIR && …'`).
+(`ssh … 'cd $REMOTE_DIR && …'`) and the compose engine
+(`COMPOSE_CMD`, `REMOTE_COMPOSE_CMD` — e.g. `docker compose` locally,
+`podman compose` on a podman host).
 
 ## 4. Guardrails
 
@@ -121,7 +123,7 @@ so their behavior stays identical; `remote-` only swaps the execution prefix
   `docker-compose.yml` and `docker-compose.env`; images come from registries.
   The bundle is validated locally (`docker compose config -q`) before upload.
 - **Keep local and remote targets in sync.** Add the `remote-` twin for every new
-  operational target and reuse `COMPOSE_ARGS` — do not restate compose flags.
+  operational target and reuse `COMPOSE_FLAGS` — do not restate compose flags.
 - **Never overwrite the remote `docker-compose.env` implicitly** — it carries
   `POSTGRES_PASSWORD`, and changing it after database init breaks the connection.
   Only `REMOTE_ENV_FORCE=1` may overwrite it.
