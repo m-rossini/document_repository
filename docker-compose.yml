@@ -78,7 +78,8 @@ services:
       start_period: 90s
 
   gotenberg:
-    image: docker.io/gotenberg/gotenberg:8
+    # Pinned: Paperless talks to it through gotenberg-client 1.0.0.
+    image: docker.io/gotenberg/gotenberg:8.38.1
     container_name: documentrepo-gotenberg
     restart: unless-stopped
     command:
@@ -87,6 +88,8 @@ services:
       - "--chromium-allow-list=file:///tmp/.*"
 
   tika:
-    image: docker.io/apache/tika:latest
+    # Pinned: Tika 4.x dropped the /tika/form/text endpoint that
+    # tika-client 1.0.0 calls, so Office ingestion fails on :latest.
+    image: docker.io/apache/tika:3.3.3.0
     container_name: documentrepo-tika
     restart: unless-stopped

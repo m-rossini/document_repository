@@ -153,6 +153,14 @@ machine.
 
 ## 8. Notes
 
+- **Images**: `tika` and `gotenberg` are pinned. `tika:latest` (4.x) breaks
+  Office ingestion — `tika-client` 1.0.0 calls `/tika/form/text`, which Tika 4
+  dropped, so `.docx`/`.odt`/`.xlsx` files fail with an empty Tika error. Bump
+  these tags deliberately and re-test Office ingestion (`docx`).
+- **Duplicates** are re-imported by default. Set
+  `PAPERLESS_CONSUMER_DELETE_DUPLICATES=1` to reject files whose SHA256 already
+  exists.
+
 - **Timezone** is `UTC` (`TZ` in `docker-compose.env`).
 - **AI features** are intentionally disabled. To enable later, add an LLM
   service (e.g. Ollama) and uncomment the `PAPERLESS_AI_*` block in
