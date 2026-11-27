@@ -1,5 +1,15 @@
 # document_repo
 
+> **DEPRECATED — superseded by [`mroffice`](https://github.com/m-rossini/mroffice).**
+> The Paperless-ngx stack from this repo now lives at
+> `mroffice/compose/paperless.yml`, unified with Nextcloud AIO + Collabora,
+> optional local AI (`COMPOSE_PROFILES=ai`), and `STACK=`-scoped
+> `make backup/restore/smoke` targets. This repo receives no further updates —
+> run the stack from `mroffice` instead (`STACK=paperless make up`).
+> Migration: `./data/{db,media,consume,export}` →
+> `${DATA_ROOT}/paperless/{pgdata,media,consume,export}`; secrets from
+> `docker-compose.env` → `mroffice` `.env` + `config/.secrets.env`.
+
 Self-hosted [Paperless-ngx](https://docs.paperless-ngx.com/) — scan, OCR, index,
 and search your documents. Everything runs locally via Docker Compose; no data
 leaves the machine.
